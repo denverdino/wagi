@@ -93,12 +93,12 @@ pub fn prepare_wasm_instance(
     link_options: WasmLinkOptions,
 ) -> Result<(Store<WasiCtx>, Instance), Error> {
     debug!("Cloning module object");
-    let (module, engine) = wasm_module.get_compiled_module()?;
+    let (module, engine, mut linker) = wasm_module.get_compiled_module()?;
     let mut store = new_store(ctx, &engine)?;
 
     debug!("Configuring linker");
-    let mut linker = Linker::new(&engine);
-    wasmtime_wasi::add_to_linker(&mut linker, |cx| cx)?;
+    //let mut linker = Linker::new(&engine);
+    //wasmtime_wasi::add_to_linker(&mut linker, |cx| cx)?;
     link_options.apply_to(&mut linker)?;
 
     debug!("instantiating module in linker");

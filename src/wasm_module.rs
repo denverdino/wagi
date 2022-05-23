@@ -2,18 +2,19 @@ use std::{fmt::Debug, sync::{Arc, RwLock}, path::Path};
 
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::*;
+use wasmtime_wasi::WasiCtx;
 
 // In future this might be pre-instantiated or something like that, so we will
 // just abstract it to be safe.
 #[derive(Clone)]
 pub enum WasmModuleSource {
-    Compiled(Module, Engine),
+    Compiled(Module, Engine, Linker<WasiCtx>),
 }
 
 impl Debug for WasmModuleSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Compiled(m, _) => f.write_fmt(format_args!("Compiled(Module={:?})", m.name())),
+            Self::Compiled(m, _, _) => f.write_fmt(format_args!("Compiled(Module={:?})", m.name())),
         }
     }
 }
@@ -40,12 +41,15 @@ impl WasmModuleSource {
     ) -> anyhow::Result<WasmModuleSource> {
         let engine = Self::new_engine(cache_config_path)?;
         let module = wasmtime::Module::new(&engine, &**data)?;
-        Ok(WasmModuleSource::Compiled(module, engine))
+        let mut linker = Linker::new(&engine);
+        wasmtime_wasi::add_to_linker(&mut linker, |cx| cx)?;
+        
+        Ok(WasmModuleSource::Compiled(module, engine, linker))
     }
 
-    pub fn get_compiled_module(&self) -> anyhow::Result<(Module, Engine)> {
+    pub fn get_compiled_module(&self) -> anyhow::Result<(Module, Engine, Linker<WasiCtx>)> {
         match self {
-            Self::Compiled(m, e) => Ok((m.clone(), e.clone())),
+            Self::Compiled(m, e, l) => Ok((m.clone(), e.clone(), l.clone())),
         }
     }
 }

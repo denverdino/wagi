@@ -4,3 +4,4 @@ wagi-cache/
 .vscode/
 _scratch/
 tests_working_dir/
+flamegraph.svg
