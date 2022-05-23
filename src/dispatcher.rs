@@ -13,7 +13,7 @@ use crate::http_util::{not_found};
 use crate::request::{RequestContext, RequestGlobalContext};
 
 use crate::handler_loader::{WasmHandlerConfigurationEntry, WasmHandlerConfiguration};
-use crate::wasm_runner::{RunWasmResult, prepare_stdio_streams, prepare_wasm_instance, run_prepared_wasm_instance_if_present, WasmLinkOptions};
+use crate::wasm_runner::{RunWasmResult, prepare_stdio_streams, prepare_wasm_instance, run_prepared_wasm_instance_if_present};
 
 #[derive(Clone, Debug)]
 pub struct RoutingTable {
@@ -284,8 +284,8 @@ fn augment_one_wasm_with_dynamic_routes(routing_table_entry: &RoutingTableEntry,
     let redirects = prepare_stdio_streams(vec![] /* TODO: eww */, global_context, routing_table_entry.unique_key())?;
 
     let ctx = build_wasi_context_for_dynamic_route_query(redirects.streams);
-    let link_options = WasmLinkOptions::none();
-    let (store, instance) = prepare_wasm_instance(ctx, &wasm_route_handler.wasm_module_source, link_options)?;
+    //let link_options = WasmLinkOptions::none();
+    let (store, instance) = prepare_wasm_instance(ctx, &wasm_route_handler.wasm_module_source)?;
 
     match run_prepared_wasm_instance_if_present(instance, store, "_routes") {
         RunWasmResult::WasmError(e) => Err(e),

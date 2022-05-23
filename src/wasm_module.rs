@@ -1,8 +1,10 @@
 use std::{fmt::Debug, sync::{Arc, RwLock}, path::Path};
+use tracing::debug;
 
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::*;
 use wasmtime_wasi::WasiCtx;
+use crate::wasm_runner::WasmLinkOptions;
 
 // In future this might be pre-instantiated or something like that, so we will
 // just abstract it to be safe.
@@ -38,12 +40,19 @@ impl WasmModuleSource {
     pub fn from_module_bytes(
         data: Arc<Vec<u8>>,
         cache_config_path: &Path,
+        allowed_hosts: Option<Vec<String>>,
+        http_max_concurrency: Option<u32>,
     ) -> anyhow::Result<WasmModuleSource> {
         let engine = Self::new_engine(cache_config_path)?;
         let module = wasmtime::Module::new(&engine, &**data)?;
         let mut linker = Linker::new(&engine);
-        wasmtime_wasi::add_to_linker(&mut linker, |cx| cx)?;
         
+        debug!("Configuring linker");
+        wasmtime_wasi::add_to_linker(&mut linker, |cx| cx)?;
+        let link_options = WasmLinkOptions::default()
+            .with_http(allowed_hosts.clone(), http_max_concurrency);
+        link_options.apply_to(&mut linker)?;
+
         Ok(WasmModuleSource::Compiled(module, engine, linker))
     }
 
