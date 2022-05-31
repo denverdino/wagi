@@ -37,5 +37,6 @@
     wasmtime-cache                  = "0.34"
     wat                             = "1.0.37"
     chrono                          = "0.4.19"
-[profile.release]
-debug = true
+
+# [profile.release]
+# debug = true
